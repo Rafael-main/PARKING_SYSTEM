@@ -2,6 +2,7 @@ import datetime
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
+import numpy as np
 
 class ParkingTable:
     def __init__(self, master):
@@ -48,9 +49,6 @@ class ParkingApp:
     def __init__(self, master, video_soruce=0):
         self.master = master
         self.master.title("Parking App")
-        self.video_source = video_soruce
-
-        self.video_capture = cv2.VideoCapture(video_source)
 
         # create left and right frames
         self.left_frame = tk.Frame(self.master)
@@ -84,25 +82,6 @@ class ParkingApp:
         table = ParkingTable(self.left_frame)
 
 
-    def detect_parking_spots(self, image):
-        # to be run by image processing class
-       
-        # ret, frame = self.video_capture.read()
-        # if ret:
-        #     cv2.imwrite("captured_frame.jpg", frame)
-        #     print("Frame captured!")
-        # return image
-        return None
-    
-    def update(self):
-        # Get the latest frame and convert it to PIL Image format
-        ret, frame = self.video_capture.read()
-        if ret:
-            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(image)
-            self.photo = ImageTk.PhotoImage(image=image)
-            self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
-        self.window.after(15, self.update)  # Refresh the frame every 15 milliseconds
 
     def update_datetime(self):
         # Update date/time label
@@ -111,6 +90,130 @@ class ParkingApp:
 
         # Restart timer
         self.left_frame.after(5000, self.update_datetime)
+
+class carParkDetect: 
+    def resize_image(image):
+        # Get the original image dimensions
+        height, width = image.shape[:2]
+
+        # Calculate the aspect ratio
+        aspect_ratio = width / height
+
+        # Set the target size
+        target_size = (600, 600)
+
+        # Determine the resize dimensions based on the aspect ratio
+        if aspect_ratio > 1:
+            new_width = target_size[0]
+            new_height = int(new_width / aspect_ratio)
+        else:
+            new_height = target_size[1]
+            new_width = int(new_height * aspect_ratio)
+
+        # Resize the image while maintaining the aspect ratio
+        resized_image = cv2.resize(image, (new_width, new_height))
+
+        # Create a black canvas of the target size
+        canvas = np.zeros((target_size[1], target_size[0], 3), dtype=np.uint8)
+
+        # Calculate the position to paste the resized image
+        x = int((target_size[0] - new_width) / 2)
+        y = int((target_size[1] - new_height) / 2)
+
+        # Paste the resized image onto the canvas
+        canvas[y:y + new_height, x:x + new_width] = resized_image
+
+        return canvas
+
+
+    def detect_parking_spots(self, image):
+        # to be run by image processing class
+        return None
+
+    
+
+    # Step 2: Preprocess Images
+    def preprocess_image(self, frame):
+        # Convert to grayscale
+        gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Apply Gaussian Blur to reduce noise
+        blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+
+        return blurred_image
+
+    # Step 3: Define a Reference Image
+    reference_image = cv2.imread('reference_image.jpg')
+
+    # Step 4: Background Subtraction
+    def perform_background_subtraction(self, reference_image, current_frame):
+        # Perform background subtraction
+        diff_image = cv2.absdiff(reference_image, current_frame)
+
+        return diff_image
+
+    # Step 5: Thresholding
+    def apply_thresholding(self, diff_image):
+        # Convert to grayscale
+        gray_image = cv2.cvtColor(diff_image, cv2.COLOR_BGR2GRAY)
+
+        # Apply thresholding
+        _, thresholded_image = cv2.threshold(self, gray_image, 20, 255, cv2.THRESH_BINARY)
+
+        return thresholded_image
+
+    # Step 6: Morphological Operations
+    def perform_morphological_operations(self, thresholded_image):
+        # Perform morphological operations
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        dilated_image = cv2.dilate(thresholded_image, kernel, iterations=2)
+        eroded_image = cv2.erode(dilated_image, kernel, iterations=1)
+
+        return eroded_image
+
+    # Step 7: Contour Detection
+    def find_contours(self, eroded_image):
+        # Find contours
+        contours, _ = cv2.findContours(eroded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        return contours
+
+    # Step 8: Parking Space Detection
+    def detect_parking_spaces(self, current_frame, contours):
+        for contour in contours:
+            # Calculate contour area
+            area = cv2.contourArea(contour)
+
+            # Set a threshold for minimum contour area
+            if area > 5000:
+                # Draw a bounding rectangle around the contour
+                x, y, w, h = cv2.boundingRect(contour)
+                cv2.rectangle(current_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        return current_frame
+    def main(self):
+        cap = cv2.VideoCapture(0)
+        while True:
+            ret, frame = cap.read()
+            preprocessed_frame = self.preprocess_image(frame)
+            diff_image = self.perform_background_subtraction(self.reference_image, preprocessed_frame)
+            thresholded_image = self.apply_thresholding(diff_image)
+
+            eroded_image = self.perform_morphological_operations(thresholded_image)
+
+            contours = self.find_contours(eroded_image)
+
+            result = self.detect_parking_spaces(frame, contours)
+
+            cv2.imshow('Parking Detection', result)
+
+            # Press 'q' to exit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # When everything done, release the capture
+        cap.release()
+        cv2.destroyAllWindows()
 
 root = tk.Tk()
 app = ParkingApp(root)
