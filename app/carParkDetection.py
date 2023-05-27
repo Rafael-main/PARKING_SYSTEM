@@ -23,12 +23,7 @@ class ParkingTable:
 
         # create rows
         self.is_parked_values = ["No"] * 10  # initialize all values to "No"
-        for i in range(1, 11):
-            # add date, time, and parking slot number
-            # date_label = tk.Label(self.master, text="2023-03-30", relief=tk.RIDGE, width=20)
-            # date_label.grid(row=i, column=0)
-            # time_label = tk.Label(self.master, text="10:00", relief=tk.RIDGE, width=20)
-            # time_label.grid(row=i, column=1)
+        for i in range(1, 7):
             slot_label = tk.Label(self.master, text=str(i), relief=tk.RIDGE, width=20)
             slot_label.grid(row=i, column=0)
 
@@ -49,7 +44,7 @@ class ParkingTable:
         is_parked_label.config(text=value)
 
 class ParkingApp:
-    def __init__(self, master, video_soruce=0):
+    def __init__(self, master):
         self.master = master
         self.master.title("Parking App")
 
@@ -59,20 +54,20 @@ class ParkingApp:
         right_frame = tk.Frame(self.master)
         right_frame.pack(side=tk.RIGHT, padx=10)
 
-        # add image on right frame
-        img = Image.open("example_image.jpg")
-        img = img.resize((400, 400), Image.ANTIALIAS)
-        photo = ImageTk.PhotoImage(img)
-        label = tk.Label(right_frame, image=photo)
-        label.image = photo
-        label.pack()
+        # # add image on right frame
+        # img = Image.open("example_image.jpg")
+        # img = img.resize((400, 400), Image.ANTIALIAS)
+        # photo = ImageTk.PhotoImage(img)
+        # label = tk.Label(right_frame, image=photo)
+        # label.image = photo
+        # label.pack()
         
-        img2 = Image.open("example_image.jpg")
-        img2 = img.resize((400, 400), Image.ANTIALIAS)
-        photo2 = ImageTk.PhotoImage(img2)
-        label2 = tk.Label(right_frame, image=photo2)
-        label2.image = photo2
-        label2.pack()
+        # img2 = Image.open("example_image.jpg")
+        # img2 = img.resize((400, 400), Image.ANTIALIAS)
+        # photo2 = ImageTk.PhotoImage(img2)
+        # label2 = tk.Label(right_frame, image=photo2)
+        # label2.image = photo2
+        # label2.pack()
 
         # add date time
         self.datetime_label = tk.Label(self.left_frame, font=("Arial", 16))
@@ -92,7 +87,7 @@ class DetectionSystem:
         self.pos_list = []
 
         # ESP32 camera URL
-        # self.camera_url = "http://192.168.1.27:81/stream"
+        self.camera_url = "http://192.168.1.114:81/stream"
 
     def resize_image(self, image):
         # Get the origiinal image dimensions
@@ -149,37 +144,15 @@ class DetectionSystem:
         except:
             self.pos_list = []
 
-        # cap = cv2.VideoCapture(self.camera_url)
- 
-        # # Check if camera opened successfully
-        # if (cap.isOpened()== False): 
-        #   print("Error opening video stream or file")
-        
-        # # Read until video is completed
-        # while(cap.isOpened()):
-        #   # Capture frame-by-frame
-        #   ret, frame = cap.read()
-        #   if ret == True:
-        
-        #     # Display the resulting frame
-        #     res_frame = self.resize_image(frame)
-        #     cv2.imshow('Frame',res_frame)
-        
-        #     # Press Q on keyboard to  exit
-        #     if cv2.waitKey(25) & 0xFF == ord('q'):
-        #       break
-        
-        #   # Break the loop
-        #   else: 
-        #     break
-        
-        # # When everything done, release the video capture object
-        # cap.release()
+        cap = cv2.VideoCapture(self.camera_url)
 
-        image = cv2.imread('nye.png')
+        # image = cv2.imread('nye.png')
         while True:
+            if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 5)
+            ret, frame = cap.read()
             # Resize the image
-            resized_image = self.resize_image(image)
+            resized_image = self.resize_image(frame)
 
             imgGray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
             imgBlur = cv2.GaussianBlur(imgGray, (3,3), 1)
@@ -210,12 +183,14 @@ class DetectionSystem:
 
             
             # Display the resized image
-            cv2.imshow('Resized Image', resized_image)
+            cv2.imshow('Parking detection system', resized_image)
             # cv2.imshow('Blur', imgBlur)
             # cv2.imshow('Image Threshold', imgThreshold)
             # cv2.imshow('Image Median', imgMedian)
             # cv2.setMouseCallback("Resized Image", mouseClick)
-            cv2.waitKey(1)
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+              break
+            # cv2.waitKey(10)
             # cv2.destroyAllWindows()
 
 
