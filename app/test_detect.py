@@ -4,11 +4,11 @@ import numpy as np
 import cvzone
 import pickle
 
-WIDTH, HEIGHT = 50, 105
+WIDTH, HEIGHT = 75, 175
 pos_list = []
 
         # ESP32 camera URL
-camera_url = "http://192.168.1.114:81/stream"
+camera_url = "http://192.168.152.59:81/stream"
 
 def resize_image(image):
     
@@ -66,8 +66,8 @@ except:
 
 def main():
 
-    # cap = cv2.VideoCapture(camera_url)
-    cap = cv2.VideoCapture('VID2.mp4')
+    cap = cv2.VideoCapture(camera_url)
+    # cap = cv2.VideoCapture('VID2.mp4')
 
     while True:
 
@@ -78,41 +78,41 @@ def main():
         # Resize the image
         resized_image = resize_image(frame)
 
-        imgGray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-        imgBlur = cv2.GaussianBlur(imgGray, (3,3), 1)
-        imgThreshold = cv2.adaptiveThreshold(imgBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 29, 11) # can play around 2nd to the last and last values. Only odd numbers allowed
+        # imgGray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
+        # imgBlur = cv2.GaussianBlur(imgGray, (3,3), 1)
+        # imgThreshold = cv2.adaptiveThreshold(imgBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 29, 11) # can play around 2nd to the last and last values. Only odd numbers allowed
 
-        imgMedian = cv2.medianBlur(imgThreshold, 5)
+        # imgMedian = cv2.medianBlur(imgThreshold, 5)
 
 
-        kernel = np.ones((3,3), np.uint8)
-        imgDilate = cv2.dilate(imgMedian, kernel, iterations=1)
+        # kernel = np.ones((3,3), np.uint8)
+        # imgDilate = cv2.dilate(imgMedian, kernel, iterations=1)
 
         for pos in pos_list:
             x, y = pos
 
-            img_crop = imgDilate[y:y+HEIGHT, x:x+WIDTH]
-            # cv2.imshow(str(x*y), img_crop)
-            count = cv2.countNonZero(img_crop)
-            # print(count)
-            cvzone.putTextRect(resized_image, str(count), (x,y+HEIGHT-4), scale=1, thickness= 1, offset= 0, colorR=(0,0,255))
+            # img_crop = imgDilate[y:y+HEIGHT, x:x+WIDTH]
+            # # cv2.imshow(str(x*y), img_crop)
+            # count = cv2.countNonZero(img_crop)
+            # # print(count)
+            # cvzone.putTextRect(resized_image, str(count), (x,y+HEIGHT-4), scale=1, thickness= 1, offset= 0, colorR=(0,0,255))
 
-            if count < 800:
-                color = (0,255,0)
-                thickness = 5
-            else:
-                color = (0,0,255)
-                thickness = 2
-            cv2.rectangle(resized_image, pos, (pos[0]+WIDTH,pos[1]+HEIGHT), color, thickness)
-            # cv2.rectangle(resized_image, pos, (pos[0]+WIDTH,pos[1]+HEIGHT), (255,0,255), 2)
+            # if count < 800:
+            #     color = (0,255,0)
+            #     thickness = 5
+            # else:
+            #     color = (0,0,255)
+            #     thickness = 2
+            # cv2.rectangle(resized_image, pos, (pos[0]+WIDTH,pos[1]+HEIGHT), color, thickness)
 
+            cv2.rectangle(resized_image, pos, (pos[0]+WIDTH,pos[1]+HEIGHT), (255,0,255), 2)
         
         # Display the resized image
         cv2.imshow('Resized Image', resized_image)
         # cv2.imshow('Blur', imgBlur)
         # cv2.imshow('Image Threshold', imgThreshold)
         # cv2.imshow('Image Median', imgMedian)
-        # cv2.setMouseCallback("Resized Image", mouseClick)
+        cv2.setMouseCallback("Resized Image", mouseClick)
         cv2.waitKey(1)
         # cv2.destroyAllWindows()
 main()

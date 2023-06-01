@@ -83,11 +83,11 @@ class ParkingApp:
 
 class DetectionSystem:
     def __init__(self):
-        self.WIDTH, self.HEIGHT = 50, 105
+        self.WIDTH, self.HEIGHT = 75, 175
         self.pos_list = []
 
         # ESP32 camera URL
-        self.camera_url = "http://192.168.1.114:81/stream"
+        self.camera_url = "http://192.168.152.59:81/stream"
 
     def resize_image(self, image):
         # Get the origiinal image dimensions
@@ -151,7 +151,7 @@ class DetectionSystem:
             if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 5)
             ret, frame = cap.read()
-            # Resize the image
+            # # Resize the image
             resized_image = self.resize_image(frame)
 
             imgGray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
@@ -173,7 +173,7 @@ class DetectionSystem:
                 # print(count)
                 cvzone.putTextRect(resized_image, str(count), (x,y+self.HEIGHT-4), scale=1, thickness= 1, offset= 0, colorR=(0,0,255))
 
-                if count < 1100:
+                if count < 2200:
                     color = (0,255,0)
                     thickness = 5
                 else:
@@ -184,10 +184,10 @@ class DetectionSystem:
             
             # Display the resized image
             cv2.imshow('Parking detection system', resized_image)
-            # cv2.imshow('Blur', imgBlur)
-            # cv2.imshow('Image Threshold', imgThreshold)
-            # cv2.imshow('Image Median', imgMedian)
-            # cv2.setMouseCallback("Resized Image", mouseClick)
+            cv2.imshow('Blur', imgBlur)
+            cv2.imshow('Image Threshold', imgThreshold)
+            cv2.imshow('Image Median', imgMedian)
+            # cv2.setMouseCallback("Resized Image", self.mouseClick)
             if cv2.waitKey(25) & 0xFF == ord('q'):
               break
             # cv2.waitKey(10)
