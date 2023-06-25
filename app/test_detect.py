@@ -8,7 +8,8 @@ WIDTH, HEIGHT = 75, 175
 pos_list = []
 
         # ESP32 camera URL
-camera_url = "http://192.168.152.59:81/stream"
+# camera_url = "http://192.168.152.59:81/stream"
+camera_url = "VID1.mp4"
 
 def resize_image(image):
     
